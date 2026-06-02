@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Reset for shadow DOM isolation */
+:host {
+  all: initial;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Scrollbar styling */
+.ser-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.ser-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ser-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+.dark .ser-scroll::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+@keyframes ser-fade-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes ser-fade-tooltip {
+  from { opacity: 0; transform: translateY(-4px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ser-animate-in {
+  animation: ser-fade-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.ser-animate-tooltip {
+  animation: ser-fade-tooltip 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes ser-spin {
+  to { transform: rotate(360deg); }
+}
+.ser-spin {
+  animation: ser-spin 0.9s linear infinite;
+}
