@@ -1,4 +1,5 @@
-import { explainText, simplifyText, defineWord } from '../services/ai';
+import { explainText, simplifyText, defineWordWithAI } from '../services/ai';
+import { lookupWord } from '../services/dictionary';
 import { getSettings, addToHistory } from '../utils/storage';
 import type { MessageRequest, MessageResponse } from '../types';
 
@@ -30,16 +31,33 @@ async function handleMessage(request: MessageRequest): Promise<MessageResponse> 
       await addToHistory({ id: `${Date.now()}`, text, action: 'explain', result, timestamp: Date.now() });
       return { success: true, data: result };
     }
+
     case 'SIMPLIFY': {
       const result = await simplifyText(text, settings);
       await addToHistory({ id: `${Date.now()}`, text, action: 'simplify', result, timestamp: Date.now() });
       return { success: true, data: result };
     }
+
     case 'DEFINE': {
-      const result = await defineWord(text, settings);
+      let result: string;
+
+      try {
+        // Always try the free dictionary API first — no API key required
+        const wordDef = await lookupWord(text);
+        result = JSON.stringify(wordDef);
+      } catch (dictError) {
+        // Dictionary couldn't find the word — fall back to Gemini AI if a key is set
+        if (settings.apiKey) {
+          result = await defineWordWithAI(text, settings);
+        } else {
+          throw dictError;
+        }
+      }
+
       await addToHistory({ id: `${Date.now()}`, text, action: 'define', result, timestamp: Date.now() });
       return { success: true, data: result };
     }
+
     default:
       return { success: false, error: 'Unknown request type.' };
   }

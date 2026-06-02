@@ -6,7 +6,7 @@ const MAX_HISTORY = 50;
 
 export const defaultSettings: Settings = {
   apiKey: '',
-  model: 'gpt-4o-mini',
+  model: 'gemini-2.0-flash',
   theme: 'light',
   autoShowPopup: true,
 };

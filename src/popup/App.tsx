@@ -46,9 +46,9 @@ export default function App() {
         >
           <Key size={14} className="text-amber-600 mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-amber-800">API Key Required</p>
+            <p className="text-xs font-semibold text-amber-800">Gemini API Key Not Set</p>
             <p className="text-xs text-amber-700 mt-0.5">
-              Add your OpenAI API key to start explaining text.
+              Add a free Gemini key to unlock Explain &amp; Simplify.
             </p>
           </div>
           <ChevronRight size={14} className="text-amber-500 mt-0.5 shrink-0" />
@@ -89,12 +89,10 @@ export default function App() {
       {/* Footer */}
       <div className="px-4 py-2 border-t border-gray-100 flex items-center justify-between">
         <span className="text-xs text-gray-400">v1.0.0</span>
-        {hasApiKey && (
-          <div className="flex items-center gap-1 text-xs text-emerald-600">
-            <Sparkles size={11} />
-            <span>{settings?.model}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-1 text-xs text-emerald-600">
+          <Sparkles size={11} />
+          <span>{hasApiKey ? settings?.model : 'Dictionary mode'}</span>
+        </div>
       </div>
     </div>
   );

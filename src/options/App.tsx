@@ -10,15 +10,18 @@ import {
   Check,
   BookOpen,
   AlertCircle,
+  BookMarked,
+  Sparkles,
+  ExternalLink,
 } from 'lucide-react';
 import { getSettings, saveSettings, defaultSettings } from '../utils/storage';
 import type { Settings } from '../types';
 
 const MODELS = [
-  { id: 'gpt-4o-mini', label: 'GPT-4o Mini', desc: 'Fast & affordable' },
-  { id: 'gpt-4o', label: 'GPT-4o', desc: 'More capable' },
-  { id: 'gpt-4-turbo', label: 'GPT-4 Turbo', desc: 'High quality' },
-  { id: 'gpt-5-mini', label: 'GPT-5 Mini', desc: 'Next generation' },
+  { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', desc: 'Recommended · Free' },
+  { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', desc: 'Fast · Free' },
+  { id: 'gemini-1.5-flash-8b', label: 'Gemini 1.5 Flash 8B', desc: 'Fastest · Free' },
+  { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', desc: 'Most capable · Free tier' },
 ];
 
 export default function App() {
@@ -42,14 +45,12 @@ export default function App() {
     });
   }, []);
 
-  // Sync dark mode class on html element
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
 
-  const update = <K extends keyof Settings>(key: K, value: Settings[K]) => {
+  const update = <K extends keyof Settings>(key: K, value: Settings[K]) =>
     setSettings((prev) => ({ ...prev, [key]: value }));
-  };
 
   const handleThemeToggle = () => {
     const next = !isDark;
@@ -89,27 +90,50 @@ export default function App() {
         </div>
 
         <div className="space-y-5">
-          {/* API Key */}
-          <Section title="OpenAI API Key" icon={<Key size={16} />} card={card} label={label}>
-            <p className={`text-sm mb-3 ${muted}`}>
-              Required to use AI features. Get your key at{' '}
-              <a
-                href="https://platform.openai.com/api-keys"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline"
-              >
-                platform.openai.com
-              </a>
-              .
-            </p>
+          {/* Free features banner */}
+          <div className={`rounded-xl border p-4 flex gap-3 ${isDark ? 'bg-emerald-950/30 border-emerald-800' : 'bg-emerald-50 border-emerald-200'}`}>
+            <BookMarked size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                Word definitions are always free
+              </p>
+              <p className={`text-xs mt-0.5 ${isDark ? 'text-emerald-600' : 'text-emerald-600'}`}>
+                Select a single word on any page and click <strong>Define</strong> — no API key needed.
+                Powered by the Free Dictionary API.
+              </p>
+            </div>
+          </div>
+
+          {/* Gemini API Key */}
+          <Section title="Google Gemini API Key" icon={<Key size={16} />} card={card} label={label}>
+            <div className={`flex items-start gap-2.5 rounded-lg p-3 mb-3 ${isDark ? 'bg-blue-950/30' : 'bg-blue-50'}`}>
+              <Sparkles size={14} className="text-blue-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-medium text-blue-700 dark:text-blue-400">
+                  Required only for Explain & Simplify
+                </p>
+                <p className={`text-xs mt-0.5 ${isDark ? 'text-blue-500' : 'text-blue-600'}`}>
+                  Get a free key (1,500 requests/day) at{' '}
+                  <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-blue-800 inline-flex items-center gap-0.5"
+                  >
+                    aistudio.google.com
+                    <ExternalLink size={10} />
+                  </a>
+                </p>
+              </div>
+            </div>
+
             <div className="relative">
               <input
                 type={showKey ? 'text' : 'password'}
                 value={settings.apiKey}
                 onChange={(e) => update('apiKey', e.target.value)}
-                placeholder="sk-..."
-                className={`input-field pr-10 ${isDark ? 'dark' : ''}`}
+                placeholder="AIza..."
+                className="input-field pr-10"
               />
               <button
                 onClick={() => setShowKey((v) => !v)}
@@ -118,16 +142,18 @@ export default function App() {
                 {showKey ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
-            {settings.apiKey && !settings.apiKey.startsWith('sk-') && (
+
+            {settings.apiKey && !settings.apiKey.startsWith('AIza') && (
               <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-600">
                 <AlertCircle size={12} />
-                API keys usually start with "sk-"
+                Gemini API keys usually start with "AIza"
               </div>
             )}
           </Section>
 
           {/* Model */}
-          <Section title="AI Model" icon={<Cpu size={16} />} card={card} label={label}>
+          <Section title="Gemini Model" icon={<Cpu size={16} />} card={card} label={label}>
+            <p className={`text-xs mb-3 ${muted}`}>All models below are on Google's free tier.</p>
             <div className="grid grid-cols-2 gap-2 mb-3">
               {MODELS.map((m) => {
                 const selected = !useCustom && settings.model === m.id;
@@ -167,13 +193,13 @@ export default function App() {
                 type="text"
                 value={customModel}
                 onChange={(e) => setCustomModel(e.target.value)}
-                placeholder="e.g. gpt-4o-2024-08-06"
+                placeholder="e.g. gemini-2.0-flash-exp"
                 className="input-field"
               />
             )}
           </Section>
 
-          {/* Appearance & Behavior */}
+          {/* Appearance */}
           <Section title="Appearance & Behavior" icon={<Zap size={16} />} card={card} label={label}>
             <div className="space-y-1">
               <Toggle
@@ -196,13 +222,9 @@ export default function App() {
             </div>
           </Section>
 
-          {/* Save button */}
+          {/* Save */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="btn-primary min-w-28"
-            >
+            <button onClick={handleSave} disabled={saving} className="btn-primary min-w-28">
               {saving ? (
                 <span className="flex items-center gap-2">
                   <span className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
@@ -218,9 +240,7 @@ export default function App() {
               )}
             </button>
             {saved && (
-              <span className="text-sm text-emerald-600 animate-fade-in">
-                Settings saved successfully.
-              </span>
+              <span className="text-sm text-emerald-600 animate-fade-in">Settings saved successfully.</span>
             )}
           </div>
         </div>
@@ -230,17 +250,9 @@ export default function App() {
 }
 
 function Section({
-  title,
-  icon,
-  card,
-  label,
-  children,
+  title, icon, card, label, children,
 }: {
-  title: string;
-  icon: React.ReactNode;
-  card: string;
-  label: string;
-  children: React.ReactNode;
+  title: string; icon: React.ReactNode; card: string; label: string; children: React.ReactNode;
 }) {
   return (
     <div className={`rounded-xl border p-5 ${card}`}>
@@ -254,21 +266,10 @@ function Section({
 }
 
 function Toggle({
-  label,
-  description,
-  checked,
-  onChange,
-  icon,
-  isDark,
-  muted,
+  label, description, checked, onChange, icon, isDark, muted,
 }: {
-  label: string;
-  description: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  icon?: React.ReactNode;
-  isDark: boolean;
-  muted: string;
+  label: string; description: string; checked: boolean;
+  onChange: (v: boolean) => void; icon?: React.ReactNode; isDark: boolean; muted: string;
 }) {
   return (
     <div className={`flex items-center justify-between rounded-lg px-3 py-3 ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} transition-colors`}>

@@ -201,7 +201,7 @@ function LoadingState({ isDark }: { isDark: boolean }) {
 }
 
 function ErrorState({ error, isDark }: { error: string; isDark: boolean }) {
-  const isApiKey = error.toLowerCase().includes('api key');
+  const isApiKey = error.toLowerCase().includes('api key') || error.toLowerCase().includes('gemini');
   return (
     <div className="px-4 py-5">
       <div className={`rounded-xl p-3 flex gap-3 ${isDark ? 'bg-red-950/30' : 'bg-red-50'}`}>
@@ -258,6 +258,11 @@ function WordDefinitionView({
 
   return (
     <div className="px-4 py-4 flex flex-col gap-3">
+      {/* Phonetic */}
+      {def.phonetic && (
+        <p className={`text-sm font-mono ${muted}`}>{def.phonetic}</p>
+      )}
+
       {/* Definition */}
       <div>
         <Label text="Meaning" muted={muted} />

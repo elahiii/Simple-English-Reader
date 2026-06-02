@@ -13,6 +13,7 @@ export interface WordDefinition {
   partOfSpeech: string;
   example: string;
   synonyms: string[];
+  phonetic?: string;
 }
 
 export interface Settings {
