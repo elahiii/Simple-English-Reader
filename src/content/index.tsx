@@ -26,56 +26,63 @@ function ContentApp({ shadowRoot }: { shadowRoot: ShadowRoot }) {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [isDark, setIsDark] = useState(false);
 
-  // Load settings and keep them fresh
+  // Ref so the stable mouseup handler always sees the latest settings
+  const settingsRef = useRef<Settings | null>(null);
+  settingsRef.current = settings;
+
   useEffect(() => {
     getSettings().then((s) => {
       setSettings(s);
       setIsDark(s.theme === 'dark');
     });
-
-    const listener = () => {
+    const onChanged = () => {
       getSettings().then((s) => {
         setSettings(s);
         setIsDark(s.theme === 'dark');
       });
     };
-    chrome.storage.onChanged.addListener(listener);
-    return () => chrome.storage.onChanged.removeListener(listener);
+    chrome.storage.onChanged.addListener(onChanged);
+    return () => chrome.storage.onChanged.removeListener(onChanged);
   }, []);
 
   const close = useCallback(() => setUi(INITIAL), []);
 
-  // Hide when clicking outside our extension
+  // Close when clicking outside the extension UI
   useEffect(() => {
     const onMousedown = (e: MouseEvent) => {
       const path = e.composedPath();
-      const inside = path.some((el) => el === shadowRoot || (el instanceof Element && el.id === 'ser-root'));
+      const inside = path.some(
+        (el) => el === shadowRoot || (el instanceof Element && el.id === 'ser-root'),
+      );
       if (!inside) setUi(INITIAL);
     };
     document.addEventListener('mousedown', onMousedown, true);
     return () => document.removeEventListener('mousedown', onMousedown, true);
   }, [shadowRoot]);
 
-  // Detect text selection
-  const handleMouseUp = useCallback(
-    (e: MouseEvent) => {
-      // Ignore clicks inside our extension
+  // Stable mouseup handler via ref — never recreated, avoids stale-closure bug.
+  // Previously ui.phase was in the dep array, causing the old handler (with phase==='popup')
+  // to still be active after the popup closed, which silently dropped the next selection.
+  useEffect(() => {
+    const handleMouseUp = (e: MouseEvent) => {
+      // Ignore events that originate inside our shadow DOM
       const path = e.composedPath();
       if (path.some((el) => el === shadowRoot)) return;
 
+      const s = settingsRef.current;
+      if (!s?.autoShowPopup) return;
+
+      // Small delay so the browser has time to finalise the selection
       setTimeout(() => {
-        const selection = window.getSelection();
-        const text = selection?.toString().trim() ?? '';
+        const sel = window.getSelection();
+        const text = sel?.toString().trim() ?? '';
+        if (!text || !sel || sel.rangeCount === 0) return;
 
-        if (!text || ui.phase === 'popup') return;
-
-        if (!settings?.autoShowPopup) {
-          setUi(INITIAL);
-          return;
-        }
-
-        const range = selection!.getRangeAt(0);
+        const range = sel.getRangeAt(0);
         const rect = range.getBoundingClientRect();
+
+        // Zero-size rect means selection collapsed or not on screen
+        if (rect.width === 0 && rect.height === 0) return;
 
         setUi({
           phase: 'tooltip',
@@ -90,20 +97,17 @@ function ContentApp({ shadowRoot }: { shadowRoot: ShadowRoot }) {
           action: null,
         });
       }, 10);
-    },
-    [settings, ui.phase, shadowRoot],
-  );
+    };
 
-  useEffect(() => {
     document.addEventListener('mouseup', handleMouseUp);
     return () => document.removeEventListener('mouseup', handleMouseUp);
-  }, [handleMouseUp]);
+  }, [shadowRoot]); // shadowRoot never changes — handler is truly stable
 
   const handleAction = useCallback((action: ActionType) => {
     setUi((prev) => ({ ...prev, phase: 'popup', action }));
   }, []);
 
-  if (ui.phase === 'hidden' || !settings) return null;
+  if (ui.phase === 'hidden') return null;
 
   return (
     <>
@@ -130,7 +134,6 @@ function ContentApp({ shadowRoot }: { shadowRoot: ShadowRoot }) {
 }
 
 function mount() {
-  // Avoid double-mounting (e.g. on dynamic navigation)
   if (document.getElementById('ser-root')) return;
 
   const host = document.createElement('div');
